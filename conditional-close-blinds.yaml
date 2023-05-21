@@ -13,24 +13,24 @@ blueprint:
       selector:
         entity:
           domain: binary_sensor
-  trigger:
-    - platform: sun
-      event: sunset
-    - platform: state
-      entity_id: !input window_sensor
-      to: 'on'
+trigger:
+  - platform: sun
+    event: sunset
+  - platform: state
+    entity_id: !input window_sensor
+    to: 'on'
 
-  condition:
-    - condition: state
-      entity_id: !input window_sensor
-      state: 'on'
+condition:
+  - condition: state
+    entity_id: !input window_sensor
+    state: 'on'
 
-  actions:
-    - service: service.close_cover
-      target:
-        entity_id: !input cover
-    - delay:
-      minutes: 1
-    - service: service.close_cover
-      target:
-        entity_id: !input cover
+action:
+  - service: service.close_cover
+    target:
+      entity_id: !input cover
+  - delay:
+    minutes: 1
+  - service: service.close_cover
+    target:
+      entity_id: !input cover
