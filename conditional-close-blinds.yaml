@@ -30,7 +30,7 @@ action:
     target:
       entity_id: !input cover
   - delay:
-    minutes: 1
+      minutes: 1
   - service: service.close_cover
     target:
       entity_id: !input cover
