@@ -19,19 +19,24 @@ trigger:
     event: sunset
   - platform: state
     entity_id: !input window_sensor
-    to: 'on' # TODO: This is open
+    to: 'off'
 
+# TODO: Condition is sun is lowered
 # condition:
   # - condition: state
   #   entity_id: !input window_sensor
   #   state: 'on'
 
 action:
-  - service: cover.close_cover
+  - service: cover.set_cover_position
     target:
       entity_id: !input cover
+      position: >
+        {% if is_state(!input.window_sensor, 'on') %} 50 {% else %} 0 {% endif %}
   - delay:
-      minutes: 1
-  - service: cover.close_cover
+      seconds: 20
+  - service: cover.set_cover_position
     target:
       entity_id: !input cover
+      position: >
+        {% if is_state(!input.window_sensor, 'on') %} 50 {% else %} 0 {% endif %}
