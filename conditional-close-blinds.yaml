@@ -31,7 +31,7 @@ action:
   - service: cover.set_cover_position
     target:
       entity_id: !input cover
-    data:
+    data_template:
       position: >
         {% if is_state(window_sensor, 'on') %} 50 {% else %} 100 {% endif %}
   - delay:
@@ -39,6 +39,6 @@ action:
   - service: cover.set_cover_position
     target:
       entity_id: !input cover
-    data:
+    data_template:
       position: >
         {% if is_state(window_sensor, 'on') -%} 50 {%- else -%} 100 {%- endif %}
