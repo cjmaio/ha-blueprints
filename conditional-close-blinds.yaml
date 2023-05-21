@@ -1,0 +1,36 @@
+blueprint:
+  name: Conditional Close Blinds
+  description: Conditionally close blinds depending on if the window is open. When the window is open, allow cover to close half way, or stay open and automatically close once the window has shut.
+  domain: automation
+  input:
+    cover:
+      name: Cover
+      selector:
+        entity:
+          domain: cover
+    window_sensor:
+      name: Window Sensor
+      selector:
+        entity:
+          domain: binary_sensor
+  trigger:
+    - platform: sun
+      event: sunset
+    - platform: state
+      entity_id: !input window_sensor
+      to: 'on'
+
+  condition:
+    - condition: state
+      entity_id: !input window_sensor
+      state: 'on'
+
+  action:
+    - service: service.close_cover
+      target:
+        entity_id: !input cover
+    - delay:
+      minutes: 1
+    - service: service.close_cover
+      target:
+        entity_id: !input cover
