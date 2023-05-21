@@ -25,7 +25,7 @@ blueprint:
       entity_id: !input window_sensor
       state: 'on'
 
-  action:
+  actions:
     - service: service.close_cover
       target:
         entity_id: !input cover
