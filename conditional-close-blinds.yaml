@@ -20,10 +20,10 @@ trigger:
     entity_id: !input window_sensor
     to: 'on'
 
-condition:
-  - condition: state
-    entity_id: !input window_sensor
-    state: 'on'
+# condition:
+  # - condition: state
+  #   entity_id: !input window_sensor
+  #   state: 'on'
 
 action:
   - service: service.close_cover
