@@ -1,6 +1,7 @@
 blueprint:
   name: Motion Activated Lights (Time of Day / Hold)
-  description: Activate lights to brightness based on time of day, turn off lights
+  description:
+    Activate lights to brightness based on time of day, turn off lights
     based on hold state after selected time period
   domain: automation
   input:
@@ -8,8 +9,9 @@ blueprint:
       name: Motion Sensor
       selector:
         entity:
-          domain: binary_sensor
-          device_class: motion
+          filter:
+            domain: binary_sensor
+            device_class: motion
           multiple: false
     light_target:
       name: Light
@@ -21,7 +23,8 @@ blueprint:
       name: Hold Boolean
       selector:
         entity:
-          domain: input_boolean
+          filter:
+            domain: input_boolean
           multiple: false
     on_night_time:
       name: (Required) On Time Night
@@ -55,7 +58,8 @@ blueprint:
           mode: slider
     no_motion_wait_day:
       name: Wait time day
-      description: Time to leave the light on after detecting the last movement for
+      description:
+        Time to leave the light on after detecting the last movement for
         daytime mode.
       default: 120
       selector:
@@ -67,7 +71,8 @@ blueprint:
           step: 1.0
     no_motion_wait_night:
       name: Wait time night
-      description: Time to leave the light on after detecting the last movement in
+      description:
+        Time to leave the light on after detecting the last movement in
         night mode
       default: 120
       selector:
@@ -81,46 +86,55 @@ blueprint:
 mode: restart
 max_exceeded: silent
 trigger:
-- platform: state
-  entity_id: !input hold_entity
-- platform: state
-  entity_id: !input motion_entity
+  - platform: state
+    entity_id: !input hold_entity
+  - platform: state
+    entity_id: !input motion_entity
 action:
-- choose:
-  - conditions:
-    - condition: state
-      entity_id: !input motion_entity
-      state: 'on'
-    - condition: time
-      after: !input on_night_time
-      before: !input off_night_time
-    sequence:
-    - alias: Turn on the light
-      service: light.turn_on
-      data:
-        brightness_pct: !input night_brightness
-      target: !input light_target
-  - conditions:
-    - condition: state
-      entity_id: !input motion_entity
-      state: 'on'
-    - condition: time
-      after: !input off_night_time
-      before: !input on_night_time
-    sequence:
-    - alias: Turn on the light
-      service: light.turn_ongit
-      data:
-        brightness_pct: !input day_brightness
-      target: !input light_target
-  - conditions:
-    - condition: state
-      entity_id: !input motion_entity
-      state: 'off'
-    - condition: state
-      entity_id: !input hold_entity
-      state: 'off'
-    sequence:
-    - alias: Turn off the light
-      service: light.turn_off
-      target: !input light_target
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input motion_entity
+            state: "on"
+          - condition: time
+            after: !input on_night_time
+            before: !input off_night_time
+          - condition: state
+            entity_id: !input light_target
+            state: "off"
+        sequence:
+          - alias: Turn on the light
+            service: light.turn_on
+            data:
+              brightness_pct: !input night_brightness
+            target: !input light_target
+      - conditions:
+          - condition: state
+            entity_id: !input motion_entity
+            state: "on"
+          - condition: time
+            after: !input off_night_time
+            before: !input on_night_time
+          - condition: state
+            entity_id: !input light_target
+            state: "off"
+        sequence:
+          - alias: Turn on the light
+            service: light.turn_on
+            data:
+              brightness_pct: !input day_brightness
+            target: !input light_target
+      - conditions:
+          - condition: state
+            entity_id: !input motion_entity
+            state: "off"
+          - condition: state
+            entity_id: !input hold_entity
+            state: "off"
+          - condition: state
+            entity_id: !input light_target
+            state: "on"
+        sequence:
+          - alias: Turn off the light
+            service: light.turn_off
+            target: !input light_target
