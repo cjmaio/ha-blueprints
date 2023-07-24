@@ -16,9 +16,10 @@ blueprint:
     light_target:
       name: Light
       selector:
-        target:
-          entity:
+        entity:
+          filter:
             domain: light
+          multiple: false
     hold_entity:
       name: Hold Boolean
       selector:
@@ -107,7 +108,8 @@ action:
             service: light.turn_on
             data:
               brightness_pct: !input night_brightness
-            target: !input light_target
+            target:
+              entity_id: !input light_target
       - conditions:
           - condition: state
             entity_id: !input motion_entity
@@ -123,7 +125,8 @@ action:
             service: light.turn_on
             data:
               brightness_pct: !input day_brightness
-            target: !input light_target
+            target:
+              entity_id: !input light_target
       - conditions:
           - condition: state
             entity_id: !input motion_entity
@@ -137,4 +140,5 @@ action:
         sequence:
           - alias: Turn off the light
             service: light.turn_off
-            target: !input light_target
+            target:
+              entity_id: !input light_target
