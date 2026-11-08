@@ -1,0 +1,135 @@
+blueprint:
+  name: Shelly BLU Remote Control ZB (ZHA)
+  description: >-
+    Actions for the Shelly BLU Remote Control ZB paired with ZHA, for each of
+    its 4 channels.
+
+
+    Use the ‹ / › arrows to pick a channel (LED 1–4), then press the left or
+    right ring button or turn the wheel. The arrows themselves send nothing, and
+    the remote does not report double presses or holds.
+
+
+    **Requires** the `custom_zha_quirks/shelly_blu_remote_zb.py` custom ZHA quirk from this repo, which adds the
+    channel to the remote's events (tested on remote firmware v1.2.13).
+
+
+    Wheel actions get `steps` (wheel notches) and `step_size` (0–255 brightness
+    units, 3 per notch) variables, e.g. `brightness_step: "{{ step_size }}"` for
+    wheel up and `brightness_step: "{{ -step_size }}"` for wheel down.
+
+
+    To find a lost remote, press its **Identify** button entity in Home
+    Assistant: the remote beeps and flashes its LEDs.
+  domain: automation
+  source_url: https://github.com/cjmaio/ha-blueprints/blob/master/shelly-blu-remote-control-zb-zha.yaml
+  author: cjmaio
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    remote:
+      name: Remote
+      description: The remote's ZHA device.
+      selector:
+        device:
+          filter:
+            - integration: zha
+              manufacturer: Shelly
+              model: BLU Remote Control ZB
+    channel_1:
+      name: Channel 1 (LED 1)
+      icon: mdi:numeric-1-circle
+      input:
+        c1_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c1_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c1_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c1_down: {name: Wheel down, default: [], selector: {action: {}}}
+    channel_2:
+      name: Channel 2 (LED 2)
+      icon: mdi:numeric-2-circle
+      collapsed: true
+      input:
+        c2_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c2_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c2_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c2_down: {name: Wheel down, default: [], selector: {action: {}}}
+    channel_3:
+      name: Channel 3 (LED 3)
+      icon: mdi:numeric-3-circle
+      collapsed: true
+      input:
+        c3_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c3_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c3_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c3_down: {name: Wheel down, default: [], selector: {action: {}}}
+    channel_4:
+      name: Channel 4 (LED 4)
+      icon: mdi:numeric-4-circle
+      collapsed: true
+      input:
+        c4_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c4_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c4_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c4_down: {name: Wheel down, default: [], selector: {action: {}}}
+
+# Queued so fast wheel turns are handled in order.
+mode: queued
+max: 20
+max_exceeded: silent
+
+triggers:
+  - trigger: event
+    event_type: zha_event
+    event_data: {device_id: !input remote, command: left_press}
+    id: left
+  - trigger: event
+    event_type: zha_event
+    event_data: {device_id: !input remote, command: right_press}
+    id: right
+  - trigger: event
+    event_type: zha_event
+    event_data: {device_id: !input remote, command: wheel_up}
+    id: up
+  - trigger: event
+    event_type: zha_event
+    event_data: {device_id: !input remote, command: wheel_down}
+    id: down
+
+actions:
+  - variables:
+      channel: "{{ trigger.event.data.args.channel | int(0) }}"
+      steps: "{{ trigger.event.data.args.steps | default(0) | int(0) }}"
+      step_size: "{{ trigger.event.data.args.step_size | default(0) | int(0) }}"
+  - choose:
+      - conditions: "{{ channel == 1 and trigger.id == 'left' }}"
+        sequence: !input c1_left
+      - conditions: "{{ channel == 1 and trigger.id == 'right' }}"
+        sequence: !input c1_right
+      - conditions: "{{ channel == 1 and trigger.id == 'up' }}"
+        sequence: !input c1_up
+      - conditions: "{{ channel == 1 and trigger.id == 'down' }}"
+        sequence: !input c1_down
+      - conditions: "{{ channel == 2 and trigger.id == 'left' }}"
+        sequence: !input c2_left
+      - conditions: "{{ channel == 2 and trigger.id == 'right' }}"
+        sequence: !input c2_right
+      - conditions: "{{ channel == 2 and trigger.id == 'up' }}"
+        sequence: !input c2_up
+      - conditions: "{{ channel == 2 and trigger.id == 'down' }}"
+        sequence: !input c2_down
+      - conditions: "{{ channel == 3 and trigger.id == 'left' }}"
+        sequence: !input c3_left
+      - conditions: "{{ channel == 3 and trigger.id == 'right' }}"
+        sequence: !input c3_right
+      - conditions: "{{ channel == 3 and trigger.id == 'up' }}"
+        sequence: !input c3_up
+      - conditions: "{{ channel == 3 and trigger.id == 'down' }}"
+        sequence: !input c3_down
+      - conditions: "{{ channel == 4 and trigger.id == 'left' }}"
+        sequence: !input c4_left
+      - conditions: "{{ channel == 4 and trigger.id == 'right' }}"
+        sequence: !input c4_right
+      - conditions: "{{ channel == 4 and trigger.id == 'up' }}"
+        sequence: !input c4_up
+      - conditions: "{{ channel == 4 and trigger.id == 'down' }}"
+        sequence: !input c4_down

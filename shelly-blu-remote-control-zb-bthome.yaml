@@ -1,0 +1,131 @@
+blueprint:
+  name: Shelly BLU Remote Control ZB (BTHome)
+  description: >-
+    Actions for the Shelly BLU Remote Control ZB, using its Bluetooth (BTHome)
+    events so all 4 channels can be told apart.
+
+
+    Use the ‹ / › arrows to pick a channel (LED 1–4), then press the left or
+    right ring button or turn the wheel. The arrows themselves send nothing, and
+    the remote does not report double presses or holds.
+
+
+    Wheel actions get a `steps` variable (how far it was turned) you can use in
+    templates, e.g. `brightness_step_pct: "{{ steps * 2 }}"`.
+  domain: automation
+  source_url: https://github.com/cjmaio/ha-blueprints/blob/master/shelly-blu-remote-control-zb-bthome.yaml
+  author: cjmaio
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    remote:
+      name: Remote
+      description: The remote's BTHome device (named like "SBRC-005B XXXX").
+      selector:
+        device:
+          filter:
+            - integration: bthome
+    channel_1:
+      name: Channel 1 (LED 1)
+      icon: mdi:numeric-1-circle
+      input:
+        c1_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c1_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c1_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c1_down: {name: Wheel down, default: [], selector: {action: {}}}
+    channel_2:
+      name: Channel 2 (LED 2)
+      icon: mdi:numeric-2-circle
+      collapsed: true
+      input:
+        c2_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c2_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c2_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c2_down: {name: Wheel down, default: [], selector: {action: {}}}
+    channel_3:
+      name: Channel 3 (LED 3)
+      icon: mdi:numeric-3-circle
+      collapsed: true
+      input:
+        c3_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c3_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c3_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c3_down: {name: Wheel down, default: [], selector: {action: {}}}
+    channel_4:
+      name: Channel 4 (LED 4)
+      icon: mdi:numeric-4-circle
+      collapsed: true
+      input:
+        c4_left: {name: Left ring button, default: [], selector: {action: {}}}
+        c4_right: {name: Right ring button, default: [], selector: {action: {}}}
+        c4_up: {name: Wheel up, default: [], selector: {action: {}}}
+        c4_down: {name: Wheel down, default: [], selector: {action: {}}}
+
+# Queued so fast wheel turns are handled in order.
+mode: queued
+max: 20
+max_exceeded: silent
+
+variables:
+  remote: !input remote
+  channel_sensor: >-
+    {{ device_entities(remote) | select('match', 'sensor\..*_channel$') | first | default('') }}
+
+triggers:
+  - trigger: event
+    event_type: bthome_ble_event
+    event_data:
+      device_id: !input remote
+
+conditions:
+  # Every wheel turn starts with a steps=0 packet before the real count; skip it.
+  - condition: template
+    value_template: >-
+      {% set d = trigger.event.data %}
+      {{ d.event_class in ['button_1', 'button_2']
+         or (d.event_class == 'dimmer' and ((d.event_properties or {}).steps | default(0) | int(0)) > 0) }}
+
+actions:
+  # HA fires the event just before it updates the channel sensor from the same
+  # packet, so give the sensor a moment to catch up.
+  - delay:
+      milliseconds: 300
+  - variables:
+      channel: "{{ states(channel_sensor) | int(0) + 1 }}"
+      steps: "{{ (trigger.event.data.event_properties or {}).steps | default(0) | int(0) }}"
+      button: >-
+        {{ {'button_1': 'left', 'button_2': 'right'}.get(trigger.event.data.event_class)
+           or ('up' if trigger.event.data.event_type == 'rotate_left' else 'down') }}
+  - choose:
+      - conditions: "{{ channel == 1 and button == 'left' }}"
+        sequence: !input c1_left
+      - conditions: "{{ channel == 1 and button == 'right' }}"
+        sequence: !input c1_right
+      - conditions: "{{ channel == 1 and button == 'up' }}"
+        sequence: !input c1_up
+      - conditions: "{{ channel == 1 and button == 'down' }}"
+        sequence: !input c1_down
+      - conditions: "{{ channel == 2 and button == 'left' }}"
+        sequence: !input c2_left
+      - conditions: "{{ channel == 2 and button == 'right' }}"
+        sequence: !input c2_right
+      - conditions: "{{ channel == 2 and button == 'up' }}"
+        sequence: !input c2_up
+      - conditions: "{{ channel == 2 and button == 'down' }}"
+        sequence: !input c2_down
+      - conditions: "{{ channel == 3 and button == 'left' }}"
+        sequence: !input c3_left
+      - conditions: "{{ channel == 3 and button == 'right' }}"
+        sequence: !input c3_right
+      - conditions: "{{ channel == 3 and button == 'up' }}"
+        sequence: !input c3_up
+      - conditions: "{{ channel == 3 and button == 'down' }}"
+        sequence: !input c3_down
+      - conditions: "{{ channel == 4 and button == 'left' }}"
+        sequence: !input c4_left
+      - conditions: "{{ channel == 4 and button == 'right' }}"
+        sequence: !input c4_right
+      - conditions: "{{ channel == 4 and button == 'up' }}"
+        sequence: !input c4_up
+      - conditions: "{{ channel == 4 and button == 'down' }}"
+        sequence: !input c4_down
